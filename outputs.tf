@@ -15,10 +15,7 @@ output "az_route_table_ids" {
 }
 
 output "az_ngw_ids" {
-  # No ellipsis needed since this module makes either public or private subnets. See the TF 0.15 one function
-  value = {
-    for nat_gw_tuple in concat(local.public_az_ngw_ids, local.private_az_ngw_ids) : nat_gw_tuple.availability_zone => nat_gw_tuple.nat_gateway_id
-  }
+  value       = local.nat_gw_availability_zones_map
   description = "Map of AZ names to NAT Gateway IDs (only for public subnets)"
 }
 
