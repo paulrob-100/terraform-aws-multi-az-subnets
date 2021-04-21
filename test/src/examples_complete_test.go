@@ -157,3 +157,102 @@ func TestExamplesCompleteNoNatGateway(t *testing.T) {
 	assert.Empty(t, publicNATGateWayIds)
 	assert.Empty(t, privateNATGateWayIds)
 }
+
+func TestExamplesCompleteTinyNetwork1AZ(t *testing.T) {
+	// Init phase module download fails when run in parallel
+	//t.Parallel()
+
+	terraformOptions := &terraform.Options{
+		// The path to where our Terraform code is located
+		TerraformDir: "../../examples/complete",
+		Upgrade:      true,
+		// Variables to pass to our Terraform code using -var-file options
+		// fixtures.nat_gw_disabled.tfvars just makes the test faster
+		VarFiles: []string{"fixtures.eu-west-1.tfvars", "fixtures.tiny-network.tfvars",
+			"fixtures.1-availability-zone.eu-west-1.tfvars",
+			"fixtures.nat_gw_disabled.tfvars"},
+	}
+
+	// At the end of the test, run `terraform destroy` to clean up any resources that were created
+	defer terraform.Destroy(t, terraformOptions)
+
+	// This will run `terraform init` and `terraform apply` and fail the test if there are any errors
+	terraform.InitAndApply(t, terraformOptions)
+
+	privateSubnets := terraform.OutputMap(t, terraformOptions, "private_az_subnets")
+	publicSubnets := terraform.OutputMap(t, terraformOptions, "public_az_subnets")
+
+	expectedAZs := []string{"eu-west-1a"}
+	assert.Equal(t, expectedAZs, getKeys(privateSubnets))
+	assert.Equal(t, expectedAZs, getKeys(publicSubnets))
+	// cidr_block /26 gives a /27 each for public and private
+	// Then further divided into the number of availability zones
+	assertValueStartsWith(t, privateSubnets, "^.*/27.*")
+	assertValueStartsWith(t, publicSubnets, "^.*/27.*")
+}
+
+func TestExamplesCompleteTinyNetwork2AZ(t *testing.T) {
+	// Init phase module download fails when run in parallel
+	//t.Parallel()
+
+	terraformOptions := &terraform.Options{
+		// The path to where our Terraform code is located
+		TerraformDir: "../../examples/complete",
+		Upgrade:      true,
+		// Variables to pass to our Terraform code using -var-file options
+		// fixtures.nat_gw_disabled.tfvars just makes the test faster
+		VarFiles: []string{"fixtures.eu-west-1.tfvars", "fixtures.tiny-network.tfvars",
+			"fixtures.2-availability-zone.eu-west-1.tfvars",
+			"fixtures.nat_gw_disabled.tfvars"},
+	}
+
+	// At the end of the test, run `terraform destroy` to clean up any resources that were created
+	defer terraform.Destroy(t, terraformOptions)
+
+	// This will run `terraform init` and `terraform apply` and fail the test if there are any errors
+	terraform.InitAndApply(t, terraformOptions)
+
+	privateSubnets := terraform.OutputMap(t, terraformOptions, "private_az_subnets")
+	publicSubnets := terraform.OutputMap(t, terraformOptions, "public_az_subnets")
+
+	expectedAZs := []string{"eu-west-1a", "eu-west-1b"}
+	assert.Equal(t, expectedAZs, getKeys(privateSubnets))
+	assert.Equal(t, expectedAZs, getKeys(publicSubnets))
+	// cidr_block /26 gives a /27 each for public and private
+	// Then further divided into the number of availability zones
+	assertValueStartsWith(t, privateSubnets, "^.*/28.*")
+	assertValueStartsWith(t, publicSubnets, "^.*/28.*")
+}
+
+func TestExamplesCompleteTinyNetwork3AZ(t *testing.T) {
+	// Init phase module download fails when run in parallel
+	//t.Parallel()
+
+	terraformOptions := &terraform.Options{
+		// The path to where our Terraform code is located
+		TerraformDir: "../../examples/complete",
+		Upgrade:      true,
+		// Variables to pass to our Terraform code using -var-file options
+		// fixtures.nat_gw_disabled.tfvars just makes the test faster
+		VarFiles: []string{"fixtures.eu-west-1.tfvars", "fixtures.small-network.tfvars",
+			"fixtures.3-availability-zone.eu-west-1.tfvars",
+			"fixtures.nat_gw_disabled.tfvars"},
+	}
+
+	// At the end of the test, run `terraform destroy` to clean up any resources that were created
+	defer terraform.Destroy(t, terraformOptions)
+
+	// This will run `terraform init` and `terraform apply` and fail the test if there are any errors
+	terraform.InitAndApply(t, terraformOptions)
+
+	privateSubnets := terraform.OutputMap(t, terraformOptions, "private_az_subnets")
+	publicSubnets := terraform.OutputMap(t, terraformOptions, "public_az_subnets")
+
+	expectedAZs := []string{"eu-west-1a", "eu-west-1b", "eu-west-1c"}
+	assert.Equal(t, expectedAZs, getKeys(privateSubnets))
+	assert.Equal(t, expectedAZs, getKeys(publicSubnets))
+	// cidr_block /25 gives a /26 each for public and private
+	// Then further divided into the number of availability zones, in this case 2 subnet bits minimum or 4 subnets
+	assertValueStartsWith(t, privateSubnets, "^.*/28.*")
+	assertValueStartsWith(t, publicSubnets, "^.*/28.*")
+}

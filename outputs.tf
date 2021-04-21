@@ -30,3 +30,11 @@ output "az_subnet_arns" {
   description = "Map of AZ names to subnet ARNs"
 }
 
+output "az_subnets" {
+  # No ellipsis needed since this module makes either public or private subnets. See the TF 0.15 one function
+  value = {
+    for subnet_tuple in concat(local.public_az_subnets, local.private_az_subnets) : subnet_tuple.availability_zone => subnet_tuple.subnet
+  }
+  description = "Map of AZ names to subnet object"
+}
+
